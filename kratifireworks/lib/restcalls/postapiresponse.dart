@@ -10,8 +10,8 @@ String onlyResultResponseToJson(OnlyResultResponse data) => json.encode(data.toJ
 
 class OnlyResultResponse {
   OnlyResultResponse({
-    this.status,
-    this.message,
+    required this.status,
+    required this.message,
   });
 
   int status;

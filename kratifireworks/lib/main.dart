@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:kratifireworks/entrypage.dart';
-
+import 'package:kratifireworks/pdf_viewer_page.dart' as app;
+import 'package:kratifireworks/ui/main_page.dart';
+import 'package:kratifireworks/util.dart';
+import 'package:printing/printing.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 main() async {
+  Util.robotoLight = await PdfGoogleFonts.robotoLight();
+  Util.robotoRegular = await PdfGoogleFonts.robotoRegular();
+  Util.robotoMedium = await PdfGoogleFonts.robotoMedium();
+  Util.robotoBold = await PdfGoogleFonts.robotoBold();
   WidgetsFlutterBinding.ensureInitialized();
   runApp((MyApp()));
 }
@@ -18,13 +25,35 @@ class MyAppState extends State<MyApp> {
     return MaterialApp(
         title: 'My app',
         debugShowCheckedModeBanner: false,
-        //home: MyHistoryListPage(),
-        home: EntryPage()
-      /*initialRoute: '/',
-      routes: {
-        '/': (context) => FrontPage(),
-        '/internetPage': (context) => NoInternetPage(),
-      },*/
-    );
+        builder: (context, widget) => ResponsiveWrapper.builder(
+              BouncingScrollWrapper.builder(context, widget!),
+              minWidth: 450,
+              defaultScale: true,
+              breakpoints: [
+                ResponsiveBreakpoint.autoScale(450,
+                    name: MOBILE, scaleFactor: 0.7),
+                ResponsiveBreakpoint.resize(700, name: TABLET),
+                ResponsiveBreakpoint.resize(1000, name: TABLET),
+                ResponsiveBreakpoint.resize(2460, name: "4K"),
+              ],
+            ),
+        theme: ThemeData(
+            primaryColor: Util.primaryColor,
+            textTheme: Util.appTextTheme(context),
+            appBarTheme: AppBarTheme(
+              toolbarTextStyle: Util.appTextTheme(context).bodyText2,
+              titleTextStyle: Util.appTextTheme(context).headline6,
+            ),
+            iconTheme: IconThemeData(color: Util.primaryColor),
+            tabBarTheme: TabBarTheme(
+              labelColor: Colors.black,
+              unselectedLabelColor: Color.fromRGBO(124, 139, 154, 1),
+              labelStyle: TextStyle(fontSize: 20, fontFamily: 'RobotoMedium'),
+              unselectedLabelStyle:
+                  TextStyle(fontSize: 20, fontFamily: 'RobotoRegular'),
+            ),
+            bottomNavigationBarTheme: BottomNavigationBarThemeData()),
+        home: MainPage());
+//        home: app.MyApp());
   }
 }

@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kratifireworks/restcalls/apis.dart';
 import 'package:kratifireworks/restcalls/postapiresponse.dart';
-import 'package:progress_dialog/progress_dialog.dart';
+import 'package:kratifireworks/ui/widgets/test_feild_widget.dart';
+import 'package:kratifireworks/util.dart';
 
 class EntryPage extends StatefulWidget {
   @override
@@ -12,75 +13,63 @@ class EntryPage extends StatefulWidget {
 }
 
 class _EntryPageState extends State<EntryPage> {
-  var cardViewHeight = 0.0;
-  var cardRoundBorder = 30.0;
   TextEditingController _codeController = TextEditingController();
   TextEditingController _hindiTextController = TextEditingController();
   TextEditingController _englishTextController = TextEditingController();
   TextEditingController _priceController = TextEditingController();
+  TextEditingController _quantityController = TextEditingController();
 
   Apis apis = Apis();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Container(
-          padding: EdgeInsets.symmetric(horizontal: 10),
-          child: Stack(
-            children: <Widget>[
-              ListView(
-                shrinkWrap: true,
-                children: [
-                  Text("Krati Fireworks",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 28,
-                      )),
-                  SizedBox(height: 30),
-                  Text("Add Crackers to database",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                      )),
-                  SizedBox(height: 10),
-                  textFieldWithText("Item code*", _codeController, "Enter item code here"),
-                  SizedBox(height: 10),
-                  textFieldWithText(
-                      "Name in Hindi*", _hindiTextController, "Enter item name in hindi here"),
-                  SizedBox(height: 10),
-                  textFieldWithText(
-                      "Name in English*", _englishTextController, "Enter item name in english here"),
-                  SizedBox(height: 10),
-                  textFieldWithNumber("Price per unit*", _priceController, "Enter item price per unit here"),
-                  SizedBox(height: 10),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 34.0),
-                    child: RaisedButton(
-                      padding: EdgeInsets.symmetric(vertical: 5.0),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(26.0)),
-                      color: Colors.greenAccent,
-                      child: Text("Add",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 28,
-                          )),
-                      onPressed: () {
-                        validateFields();
-                      },
-                    ),
-                  )
-                ],
-              )
-            ],
+    return Scaffold(
+      body: LayoutBuilder(builder: (context, constraints) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Card(
+            color: Colors.white,
+            margin: EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Container(
+                margin: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    (constraints.maxWidth < 700) ? getMobileUi() : getWebUi(),
+                    Container(
+                      constraints: BoxConstraints(minWidth: 100, maxWidth: 200),
+                      width: MediaQuery.of(context).size.width / 2,
+                      margin: EdgeInsets.only(top: 15),
+                      child: RaisedButton(
+                        padding: EdgeInsets.all(15),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5.0)),
+                        color: Util.primaryColor,
+                        child: Text("Add",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'RobotoMedium',
+                              fontSize: 20,
+                            )),
+                        onPressed: () {
+//                          List<Datum> _itemSuggestionList = new List();
+//                          Apis _apis = Apis();
+//                          Future<ItemSuggestionResponse> map = _apis.getSuggestions("A");
+//                          map.then((value) {
+//                            return value.data;
+//                          });
+                          validateFields();
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -88,7 +77,7 @@ class _EntryPageState extends State<EntryPage> {
     (_codeController.text.length != 0 &&
             _englishTextController.text.length != 0 &&
             _hindiTextController.text.length != 0 &&
-            _priceController.text.length != 0)
+            _priceController.text.length != 0 && _quantityController.text.length != 0)
         ? onPressAdd()
         : showDialog(
             context: context,
@@ -97,6 +86,7 @@ class _EntryPageState extends State<EntryPage> {
                 "No Field should be empty",
                 style: TextStyle(
                   color: Colors.grey.shade700,
+                  fontFamily: 'RobotoRegular',
                   fontSize: 12,
                 ),
               ),
@@ -117,20 +107,23 @@ class _EntryPageState extends State<EntryPage> {
   }
 
   onPressAdd() {
-    progressDialog(context).show();
+//    progressDialog(context).show();
     Future<OnlyResultResponse> map = apis.getPendingBills(
         _codeController.text,
         _englishTextController.text,
         _hindiTextController.text,
-        _priceController.text);
+        _priceController.text,
+        _quantityController.text
+    );
 
     map.then((value) {
-      progressDialog(context).hide();
+//      progressDialog(context).hide();
       if (value.status == 1) {
         _codeController.clear();
         _englishTextController.clear();
         _hindiTextController.clear();
         _priceController.clear();
+        _quantityController.clear();
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -138,6 +131,7 @@ class _EntryPageState extends State<EntryPage> {
               "Item Added Successfully",
               style: TextStyle(
                 color: Colors.grey.shade700,
+                fontFamily: 'RobotoRegular',
                 fontSize: 12,
               ),
             ),
@@ -155,8 +149,7 @@ class _EntryPageState extends State<EntryPage> {
             ],
           ),
         );
-      }
-      else if(value.status == 2){
+      } else if (value.status == 2) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -164,6 +157,7 @@ class _EntryPageState extends State<EntryPage> {
               "Item code already exists",
               style: TextStyle(
                 color: Colors.grey.shade700,
+                fontFamily: 'RobotoRegular',
                 fontSize: 12,
               ),
             ),
@@ -181,8 +175,7 @@ class _EntryPageState extends State<EntryPage> {
             ],
           ),
         );
-      }
-      else if(value.status == 0){
+      } else if (value.status == 0) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -190,6 +183,7 @@ class _EntryPageState extends State<EntryPage> {
               "Some fields are empty!",
               style: TextStyle(
                 color: Colors.grey.shade700,
+                fontFamily: 'RobotoRegular',
                 fontSize: 12,
               ),
             ),
@@ -207,8 +201,7 @@ class _EntryPageState extends State<EntryPage> {
             ],
           ),
         );
-      }
-      else {
+      } else {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -216,6 +209,7 @@ class _EntryPageState extends State<EntryPage> {
               "Something went wrong! Please try again later",
               style: TextStyle(
                 color: Colors.grey.shade700,
+                fontFamily: 'RobotoRegular',
                 fontSize: 12,
               ),
             ),
@@ -243,16 +237,17 @@ class _EntryPageState extends State<EntryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(
-              color: Colors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w600
-          ), textAlign: TextAlign.start),
+          Text(label,
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600),
+              textAlign: TextAlign.start),
           SizedBox(height: 5),
           TextField(
             decoration: InputDecoration(
-                hintText: hint,
-                isDense: true,
+              hintText: hint,
+              isDense: true,
             ),
             keyboardType: TextInputType.text,
             controller: controller,
@@ -262,32 +257,99 @@ class _EntryPageState extends State<EntryPage> {
     );
   }
 
-  textFieldWithNumber(String label, controller, String hint) {
-    return Container(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(
-              color: Colors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w600
-          ), textAlign: TextAlign.start),
-          SizedBox(height: 5),
-          TextField(
-            decoration: InputDecoration(
-                hintText: hint,
-                isDense: true,
-            ),
-            keyboardType: TextInputType.number,
-            controller: controller,
-          )
-        ],
-      ),
+  /*ProgressDialog progressDialog(BuildContext context) {
+    return ProgressDialog(context,
+        type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
+  }*/
+
+  getMobileUi() {
+    return Column(
+      children: [
+        TextFieldWidget(
+            label: "Item code*",
+            controller: _codeController,
+            hint: "Enter item code here",
+            type: TextInputType.text),
+        TextFieldWidget(
+            label: "Name in Hindi*",
+            controller: _hindiTextController,
+            hint: "Enter item name in hindi here",
+            type: TextInputType.text),
+        TextFieldWidget(
+            label: "Name in English*",
+            controller: _englishTextController,
+            hint: "Enter item name in english here",
+            type: TextInputType.text),
+        TextFieldWidget(
+            label: "Price per unit*",
+            controller: _priceController,
+            hint: "Enter item price per unit here",
+            type: TextInputType.number),
+        TextFieldWidget(
+            label: "Quantity*",
+            controller: _quantityController,
+            hint: "Enter Quantity of item",
+            type: TextInputType.number),
+      ],
     );
   }
 
-  ProgressDialog progressDialog(BuildContext context){
-    return ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
+  getWebUi() {
+    return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(minWidth: 100, maxWidth: 700),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: TextFieldWidget(
+                    label: "Item code*",
+                    controller: _codeController,
+                    hint: "Enter item code here",
+                    type: TextInputType.text),
+              ),
+              Expanded(
+                flex: 3,
+                child: TextFieldWidget(
+                    label: "Name in Hindi*",
+                    controller: _hindiTextController,
+                    hint: "Enter item name in hindi here",
+                    type: TextInputType.text),
+              ),
+              Expanded(
+                flex: 1,
+                child: TextFieldWidget(
+                    label: "Quantity*",
+                    controller: _quantityController,
+                    hint: "Enter Quantity of item",
+                    type: TextInputType.number),
+              )
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFieldWidget(
+                    label: "Name in English*",
+                    controller: _englishTextController,
+                    hint: "Enter item name in english here",
+                    type: TextInputType.text),
+              ),
+              Expanded(
+                flex: 1,
+                child: TextFieldWidget(
+                    label: "Price per unit*",
+                    controller: _priceController,
+                    hint: "Enter item price per unit here",
+                    type: TextInputType.number, decimal: true),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
