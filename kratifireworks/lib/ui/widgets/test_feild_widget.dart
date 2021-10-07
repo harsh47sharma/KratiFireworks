@@ -6,6 +6,7 @@ class TextFieldWidget extends StatefulWidget {
   final String hint;
   final TextEditingController controller;
   final bool decimal;
+  final bool readOnly;
   final TextInputType type;
 
   TextFieldWidget(
@@ -13,6 +14,7 @@ class TextFieldWidget extends StatefulWidget {
       required this.hint,
       required this.controller,
       this.decimal = false,
+      this.readOnly = false,
       required this.type});
 
   @override
@@ -35,6 +37,7 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
+            readOnly: widget.readOnly,
             style: TextStyle(fontFamily: 'RobotoRegular'),
             decoration: InputDecoration(
                 border: OutlineInputBorder(),

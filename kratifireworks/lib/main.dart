@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:kratifireworks/pdf_viewer_page.dart' as app;
 import 'package:kratifireworks/ui/main_page.dart';
 import 'package:kratifireworks/util.dart';
 import 'package:printing/printing.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 main() async {
-  Util.robotoLight = await PdfGoogleFonts.robotoLight();
-  Util.robotoRegular = await PdfGoogleFonts.robotoRegular();
-  Util.robotoMedium = await PdfGoogleFonts.robotoMedium();
-  Util.robotoBold = await PdfGoogleFonts.robotoBold();
+  Util.robotoLight = await PdfGoogleFonts.hindLight();
+  Util.robotoRegular = await PdfGoogleFonts.hindRegular();
+  Util.robotoMedium = await PdfGoogleFonts.hindMedium();
+  Util.robotoBold = await PdfGoogleFonts.hindBold();
   WidgetsFlutterBinding.ensureInitialized();
   runApp((MyApp()));
 }

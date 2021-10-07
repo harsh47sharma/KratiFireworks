@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kratifireworks/models/product_details_model.dart';
+import 'package:kratifireworks/util.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -70,7 +71,6 @@ class PdfViewerPageState extends State<PdfViewerPage> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     pw.RichText.debug = true;
-
     final actions = <PdfPreviewAction>[
       if (!kIsWeb)
         PdfPreviewAction(
@@ -80,6 +80,24 @@ class PdfViewerPageState extends State<PdfViewerPage> with SingleTickerProviderS
     ];
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Util.primaryColor,
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Icon(Icons.arrow_back_ios),
+        ),
+        centerTitle: true,
+        title: Text(
+          "Invoice",
+          style: TextStyle(
+            fontSize: 22,
+            fontFamily: 'RobotoMedium',
+            color: Colors.white
+          ),
+        ),
+      ),
       body: PdfPreview(
         maxPageWidth: 500,
         initialPageFormat: PdfPageFormat.a3,

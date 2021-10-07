@@ -7,7 +7,9 @@ import 'package:kratifireworks/pdf_viewer_page.dart';
 import 'package:kratifireworks/create_json.dart';
 import 'package:kratifireworks/models/product_details_model.dart';
 import 'package:kratifireworks/restcalls/apis.dart';
+import 'package:kratifireworks/restcalls/generate_invoice_response.dart';
 import 'package:kratifireworks/restcalls/item_suggestion_response.dart';
+import 'package:kratifireworks/ui/widgets/progress_indicator_widget.dart';
 import 'package:kratifireworks/ui/widgets/test_feild_widget.dart';
 import 'package:kratifireworks/util.dart';
 
@@ -29,6 +31,8 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
   TextEditingController _totalPriceController = TextEditingController();
   Apis apis = Apis();
   int _totalQuantity = -1;
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -39,9 +43,18 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LayoutBuilder(builder: (context, constraints) {
-        return Align(alignment: Alignment.topCenter, child: getUi(constraints));
-      }),
+      body: ProgressIndicatorWidget(
+        isLoading: _isLoading,
+        child: LayoutBuilder(builder: (context, constraints) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: Form(
+              key: _formKey,
+              child: getUi(constraints),
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -110,7 +123,7 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
                 fontFamily: bold ? 'RobotoBold' : 'RobotoRegular')));
   }
 
-  validateProductDetails() {
+  validateProductDetails(constraints) {
     String s = "null";
     if (_codeController.text.trim().isEmpty)
       s = "Item Code can't be empty";
@@ -124,19 +137,26 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
       s = "Total Price can't be empty";
 
     if (s == "null") {
-      setState(() {
-        ProductDetailsModel.addItem(
-            _codeController.text.trim(),
-            _titleController.text.trim(),
-            double.parse(_itemPriceController.text),
-            int.parse(_quantityController.text),
-            double.parse(_totalPriceController.text));
-      });
-      _codeController.clear();
-      _titleController.clear();
-      _itemPriceController.clear();
-      _quantityController.clear();
-      _totalPriceController.clear();
+      if (_formKey.currentState!.validate()) {
+        setState(() {
+          ProductDetailsModel.addItem(
+              _codeController.text.trim(),
+              _titleController.text.trim(),
+              double.parse(_itemPriceController.text),
+              int.parse(_quantityController.text),
+              double.parse(_totalPriceController.text));
+        });
+        _codeController.clear();
+        _titleController.clear();
+        _itemPriceController.clear();
+        _quantityController.clear();
+        _totalPriceController.clear();
+      } else {
+        if(constraints.maxWidth <= 700) {
+          Util.dialog(context, _totalQuantity.toString() +
+              " Available in stock.", "OK", title: "Alert!");
+        }
+      }
     } else {
       Util.dialog(context, s, "OK", title: "Alert!");
     }
@@ -144,9 +164,6 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
 
   onTapGenerateEstimate() {
     String s = "null";
-    CreateJson createJson = CreateJson();
-    print(jsonEncode(createJson));
-
     if (_nameController.text.trim().isEmpty)
       s = "Please Enter Customer's Name";
     else if (_contactController.text.trim().isEmpty)
@@ -155,17 +172,34 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
       s = "Please Enter Customer's GST Number";
     else if (ProductDetailsModel.orderDetails.length <= 0)
       s = "No Product Added";
-
     if (s == "null") {
+      setState(() {
+        _isLoading = true;
+      });
       ProductDetailsModel.orderDetails.forEach((element) {
         ProductDetailsModel.billTotal =
             (ProductDetailsModel.billTotal! + element.totalPrice);
+        ProductDetailsModel.customerName = _nameController.text;
+        ProductDetailsModel.contactNo = _contactController.text;
+        ProductDetailsModel.gstNumber = _gstController.text;
+        Future<GenerateInvoiceResponse> map = apis.generateInvoiceApiCall();
+        map.then((value) {
+          ProductDetailsModel.billNo = value.billNo;
+          setState(() {
+            _isLoading = false;
+          });
+        });
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: ((context) => PdfViewerPage()), //pdfInBytes: pdfInBytes
+            )).then((_) => setState(() {
+              ProductDetailsModel.clear();
+              _nameController.clear();
+              _contactController.clear();
+              _gstController.clear();
+            }));
       });
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: ((context) => PdfViewerPage()), //pdfInBytes: pdfInBytes
-          ));
     } else {
       Util.dialog(context, s, "OK", title: "Alert!");
     }
@@ -187,6 +221,9 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
       padding: EdgeInsets.all(10),
       child: TypeAheadField<Datum?>(
         textFieldConfiguration: TextFieldConfiguration(
+            onChanged: (s) {
+              _totalQuantity = -1;
+            },
             style: TextStyle(fontFamily: 'RobotoRegular'),
             controller: controller,
             decoration: InputDecoration(
@@ -213,6 +250,7 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
           _codeController.text = suggestion!.code.toString();
           _titleController.text = suggestion.titleHi.toString();
           _itemPriceController.text = suggestion.price.toString();
+          _totalQuantity = int.parse(suggestion.quantity);
         },
       ),
     );
@@ -335,14 +373,16 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
                           Container(
                             padding: EdgeInsets.all(10),
                             child: TextFormField(
-//                                validator: (value) {
-//                                  if (int.parse(value) > ) {
-//                                    return 'Error Message';
-//                                  }
-//                                  return null;
-//                                },
+                                validator: (value) {
+                                  if (int.parse(value!) > _totalQuantity && _totalQuantity!=-1) {
+                                    return _totalQuantity.toString() +
+                                        " Available in stock.";
+                                  }
+                                  return null;
+                                },
                                 style: TextStyle(fontFamily: 'RobotoRegular'),
                                 decoration: InputDecoration(
+                                  errorStyle: TextStyle(fontFamily: 'RobotoRegular'),
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(2)),
                                   isDense: true,
@@ -366,7 +406,7 @@ class _GenerateInvoiceState extends State<GenerateInvoice> {
                               decimal: true),
                           GestureDetector(
                             onTap: () {
-                              validateProductDetails();
+                              validateProductDetails(constraints);
                             },
                             child: Icon(Icons.add, color: Colors.green),
                           ),
